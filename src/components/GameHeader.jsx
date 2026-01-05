@@ -1,6 +1,6 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { Coins, Trophy, Sword, Store, Home, TrendingUp, User, Award, Gift, ArrowLeftRight, Zap, Volume2, VolumeX } from 'lucide-react';
+import { Coins, Trophy, Sword, Store, Home, TrendingUp, User, Award, Gift, ArrowLeftRight, Zap, Volume2, VolumeX, Settings } from 'lucide-react';
 
 const GameHeader = ({ gameState, setGameState, playerCoins, playerMemes, soundEnabled, toggleSound }) => {
   const navItems = [
@@ -13,6 +13,7 @@ const GameHeader = ({ gameState, setGameState, playerCoins, playerMemes, soundEn
     { id: 'daily', label: 'Daily', icon: Gift },
     { id: 'achievements', label: 'Achievements', icon: Award },
     { id: 'profile', label: 'Profile', icon: User },
+    { id: 'settings', label: 'Settings', icon: Settings },
     { id: 'leaderboard', label: 'Leaderboard', icon: Trophy },
   ];
 

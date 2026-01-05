@@ -12,8 +12,8 @@ import TournamentMode from './components/TournamentMode';
 import MemeUpgrade from './components/MemeUpgrade';
 import DailyRewards from './components/DailyRewards';
 import TradingPost from './components/TradingPost';
+import Settings from './components/Settings';
 import AnimatedBattle from './components/AnimatedBattle';
-import useSound from './hooks/useSound';
 
 const CryptoMemeGame = () => {
   const [gameState, setGameState] = useState('collection');
@@ -32,6 +32,26 @@ const CryptoMemeGame = () => {
   });
   const [lastClaimDate, setLastClaimDate] = useState(null);
   
+  const resetGame = () => {
+    if (confirm('Are you sure you want to reset all game progress? This cannot be undone!')) {
+      setPlayerCoins(1000);
+      setPlayerMemes([]);
+      setPlayerStats({
+        level: 1,
+        experience: 0,
+        totalWins: 0,
+        totalLosses: 0,
+        totalBattles: 0,
+        achievements: []
+      });
+      setLastClaimDate(null);
+      setSelectedMeme(null);
+      setBattleResult(null);
+      localStorage.clear();
+      alert('Game has been reset!');
+    }
+  };
+
   const { playSound, soundEnabled, toggleSound } = useSound();
 
   const cryptoMemes = [
@@ -209,6 +229,14 @@ const CryptoMemeGame = () => {
             playerMemes={playerMemes}
             playerCoins={playerCoins}
             onTrade={performTrade}
+          />
+        );
+      case 'settings':
+        return (
+          <Settings 
+            soundEnabled={soundEnabled}
+            toggleSound={toggleSound}
+            onResetGame={resetGame}
           />
         );
       default:
