@@ -1,6 +1,6 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { Star, Zap, Shield, Sword } from 'lucide-react';
+import { Star, Zap, Shield, Sword, Coins } from 'lucide-react';
 
 const MemeCollection = ({ memes, selectedMeme, onSelectMeme, onBattle }) => {
   const getRarityColor = (rarity) => {

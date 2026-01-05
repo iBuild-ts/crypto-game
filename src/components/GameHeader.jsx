@@ -1,12 +1,18 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { Coins, Trophy, Sword, Store, Home, TrendingUp } from 'lucide-react';
+import { Coins, Trophy, Sword, Store, Home, TrendingUp, User, Award, Gift, ArrowLeftRight, Zap, Volume2, VolumeX } from 'lucide-react';
 
-const GameHeader = ({ gameState, setGameState, playerCoins, playerMemes }) => {
+const GameHeader = ({ gameState, setGameState, playerCoins, playerMemes, soundEnabled, toggleSound }) => {
   const navItems = [
     { id: 'collection', label: 'Collection', icon: Home },
     { id: 'shop', label: 'Shop', icon: Store },
     { id: 'battle', label: 'Battle', icon: Sword },
+    { id: 'tournament', label: 'Tournament', icon: Trophy },
+    { id: 'upgrade', label: 'Upgrade', icon: Zap },
+    { id: 'trading', label: 'Trading', icon: ArrowLeftRight },
+    { id: 'daily', label: 'Daily', icon: Gift },
+    { id: 'achievements', label: 'Achievements', icon: Award },
+    { id: 'profile', label: 'Profile', icon: User },
     { id: 'leaderboard', label: 'Leaderboard', icon: Trophy },
   ];
 
@@ -25,9 +31,15 @@ const GameHeader = ({ gameState, setGameState, playerCoins, playerMemes }) => {
             <Coins className="w-5 h-5" />
             {playerCoins}
           </div>
+          <button
+            onClick={toggleSound}
+            className="p-2 rounded-lg bg-purple-700 hover:bg-purple-600 transition-colors"
+          >
+            {soundEnabled ? <Volume2 className="w-5 h-5 text-white" /> : <VolumeX className="w-5 h-5 text-gray-400" />}
+          </button>
         </div>
         
-        <nav className="flex gap-2">
+        <nav className="flex flex-wrap gap-2 max-w-3xl">
           {navItems.map((item) => {
             const Icon = item.icon;
             const isActive = gameState === item.id;
@@ -38,7 +50,7 @@ const GameHeader = ({ gameState, setGameState, playerCoins, playerMemes }) => {
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
                 onClick={() => setGameState(item.id)}
-                className={`flex items-center gap-2 px-4 py-2 rounded-lg font-semibold transition-all duration-200 ${
+                className={`flex items-center gap-2 px-3 py-2 rounded-lg font-semibold transition-all duration-200 text-sm ${
                   isActive 
                     ? 'bg-gradient-to-r from-yellow-400 to-orange-500 text-gray-900 shadow-lg' 
                     : 'bg-purple-700 text-white hover:bg-purple-600'
