@@ -14,6 +14,9 @@ import DailyRewards from './components/DailyRewards';
 import TradingPost from './components/TradingPost';
 import Settings from './components/Settings';
 import AnimatedBattle from './components/AnimatedBattle';
+import MultiplayerBattle from './components/MultiplayerBattle';
+import AIBattleArena from './components/AIBattleArena';
+import GuildSystem from './components/GuildSystem';
 
 const CryptoMemeGame = () => {
   const [gameState, setGameState] = useState('collection');
@@ -237,6 +240,32 @@ const CryptoMemeGame = () => {
             soundEnabled={soundEnabled}
             toggleSound={toggleSound}
             onResetGame={resetGame}
+          />
+        );
+      case 'multiplayer':
+        return (
+          <MultiplayerBattle 
+            playerMemes={playerMemes}
+            playerCoins={playerCoins}
+            setPlayerCoins={setPlayerCoins}
+            playSound={playSound}
+          />
+        );
+      case 'ai-battle':
+        return (
+          <AIBattleArena 
+            playerMemes={playerMemes}
+            playerCoins={playerCoins}
+            setPlayerCoins={setPlayerCoins}
+            playSound={playSound}
+          />
+        );
+      case 'guilds':
+        return (
+          <GuildSystem 
+            playerCoins={playerCoins}
+            setPlayerCoins={setPlayerCoins}
+            playSound={playSound}
           />
         );
       default:
