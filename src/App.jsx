@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Coins, Trophy, Sword, Heart, Star, Zap, Shield, TrendingUp, User, Award, Gift, ArrowLeftRight } from 'lucide-react';
+import useSound from './hooks/useSound';
+import useGameStore from './store/gameStore';
 import GameHeader from './components/GameHeader';
 import MemeCollection from './components/MemeCollection';
 import BattleArena from './components/BattleArena';
@@ -19,43 +21,30 @@ import AIBattleArena from './components/AIBattleArena';
 import GuildSystem from './components/GuildSystem';
 
 const CryptoMemeGame = () => {
-  const [gameState, setGameState] = useState('collection');
-  const [playerCoins, setPlayerCoins] = useState(1000);
-  const [playerMemes, setPlayerMemes] = useState([]);
-  const [selectedMeme, setSelectedMeme] = useState(null);
-  const [battleResult, setBattleResult] = useState(null);
-  const [showConfetti, setShowConfetti] = useState(false);
-  const [playerStats, setPlayerStats] = useState({
-    level: 1,
-    experience: 0,
-    totalWins: 0,
-    totalLosses: 0,
-    totalBattles: 0,
-    achievements: []
-  });
-  const [lastClaimDate, setLastClaimDate] = useState(null);
-  
-  const resetGame = () => {
-    if (confirm('Are you sure you want to reset all game progress? This cannot be undone!')) {
-      setPlayerCoins(1000);
-      setPlayerMemes([]);
-      setPlayerStats({
-        level: 1,
-        experience: 0,
-        totalWins: 0,
-        totalLosses: 0,
-        totalBattles: 0,
-        achievements: []
-      });
-      setLastClaimDate(null);
-      setSelectedMeme(null);
-      setBattleResult(null);
-      localStorage.clear();
-      alert('Game has been reset!');
-    }
-  };
-
   const { playSound, soundEnabled, toggleSound } = useSound();
+  
+  // Use Zustand store
+  const {
+    gameState,
+    setGameState,
+    playerCoins,
+    playerMemes,
+    selectedMeme,
+    setSelectedMeme,
+    battleResult,
+    setBattleResult,
+    showConfetti,
+    triggerConfetti,
+    playerStats,
+    lastClaimDate,
+    claimDailyReward,
+    addMeme,
+    spendCoins,
+    recordBattle,
+    resetGame,
+    settings,
+    updateSettings,
+  } = useGameStore();
 
   const cryptoMemes = [
     { id: 1, name: 'Doge To The Moon', power: 85, rarity: 'legendary', emoji: '🐕', price: 500 },
@@ -66,52 +55,54 @@ const CryptoMemeGame = () => {
     { id: 6, name: 'NGMI', power: 40, rarity: 'common', emoji: '😢', price: 80 },
     { id: 7, name: 'Diamond Hands', power: 90, rarity: 'legendary', emoji: '💪', price: 600 },
     { id: 8, name: 'Paper Hands', power: 30, rarity: 'common', emoji: '🧻', price: 50 },
+    { id: 9, name: 'Laser Eyes', power: 95, rarity: 'legendary', emoji: '👁️', price: 750 },
+    { id: 10, name: 'To The Moon', power: 88, rarity: 'epic', emoji: '🌙', price: 450 },
   ];
 
+  // Initialize with starter meme
   useEffect(() => {
-    const starterMeme = cryptoMemes.find(meme => meme.name === 'Doge To The Moon');
-    if (starterMeme) {
-      setPlayerMemes([starterMeme]);
+    if (playerMemes.length === 0) {
+      const starterMeme = cryptoMemes.find(meme => meme.name === 'Doge To The Moon');
+      if (starterMeme) {
+        addMeme(starterMeme);
+      }
     }
-  }, []);
+  }, [playerMemes.length, addMeme]);
 
   const buyMeme = (meme) => {
     if (playerCoins >= meme.price) {
-      setPlayerCoins(playerCoins - meme.price);
-      setPlayerMemes([...playerMemes, { ...meme, id: Date.now(), level: 1 }]);
-      setShowConfetti(true);
+      spendCoins(meme.price);
+      addMeme(meme);
+      triggerConfetti();
       playSound('coin');
-      setTimeout(() => setShowConfetti(false), 2000);
     }
   };
 
   const upgradeMeme = (memeId, upgradedMeme, cost) => {
     if (playerCoins >= cost) {
-      setPlayerCoins(playerCoins - cost);
-      setPlayerMemes(playerMemes.map(meme => 
-        meme.id === memeId ? upgradedMeme : meme
-      ));
+      spendCoins(cost);
+      const { upgradeMeme } = useGameStore.getState();
+      upgradeMeme(memeId, upgradedMeme);
       playSound('achievement');
     }
   };
 
-  const claimDailyReward = (reward) => {
-    setPlayerCoins(playerCoins + reward.coins);
-    setLastClaimDate(new Date().toDateString());
+  const handleClaimDailyReward = (reward) => {
+    claimDailyReward(reward);
     playSound('achievement');
-    setShowConfetti(true);
-    setTimeout(() => setShowConfetti(false), 2000);
+    triggerConfetti();
   };
 
   const performTrade = (type, meme, amount) => {
     if (type === 'buy') {
-      setPlayerCoins(playerCoins - amount);
-      setPlayerMemes([...playerMemes, { ...meme, id: Date.now(), level: 1 }]);
-      playSound('coin');
+      spendCoins(amount);
+      addMeme(meme);
+      playSound('trade');
     } else if (type === 'sell') {
-      setPlayerCoins(playerCoins + amount);
-      setPlayerMemes(playerMemes.filter(m => m.id !== meme.id));
-      playSound('coin');
+      const { addCoins, removeMeme } = useGameStore.getState();
+      addCoins(amount);
+      removeMeme(meme.id);
+      playSound('trade');
     }
   };
 
@@ -131,20 +122,11 @@ const CryptoMemeGame = () => {
       opponentMeme
     });
     
-    // Update player stats
-    setPlayerStats(prev => ({
-      ...prev,
-      totalBattles: prev.totalBattles + 1,
-      totalWins: won ? prev.totalWins + 1 : prev.totalWins,
-      totalLosses: won ? prev.totalLosses : prev.totalLosses + 1,
-      experience: prev.experience + (won ? 50 : 10)
-    }));
+    recordBattle(won, coinsWon);
     
     if (won) {
-      setPlayerCoins(playerCoins + coinsWon);
-      setShowConfetti(true);
+      triggerConfetti();
       playSound('victory');
-      setTimeout(() => setShowConfetti(false), 2000);
     } else {
       playSound('defeat');
     }
@@ -187,7 +169,8 @@ const CryptoMemeGame = () => {
             opponentMeme={battleResult?.opponentMeme}
             onBattleComplete={(result) => {
               if (result.winner === 'player') {
-                setPlayerCoins(prev => prev + 100);
+                const { addCoins } = useGameStore.getState();
+                addCoins(100);
                 playSound('victory');
               } else {
                 playSound('defeat');
@@ -222,7 +205,7 @@ const CryptoMemeGame = () => {
       case 'daily':
         return (
           <DailyRewards 
-            onClaimReward={claimDailyReward}
+            onClaimReward={handleClaimDailyReward}
             lastClaimDate={lastClaimDate}
           />
         );
@@ -240,6 +223,8 @@ const CryptoMemeGame = () => {
             soundEnabled={soundEnabled}
             toggleSound={toggleSound}
             onResetGame={resetGame}
+            settings={settings}
+            updateSettings={updateSettings}
           />
         );
       case 'multiplayer':
@@ -247,7 +232,7 @@ const CryptoMemeGame = () => {
           <MultiplayerBattle 
             playerMemes={playerMemes}
             playerCoins={playerCoins}
-            setPlayerCoins={setPlayerCoins}
+            setPlayerCoins={useGameStore.getState().setPlayerCoins}
             playSound={playSound}
           />
         );
@@ -256,7 +241,7 @@ const CryptoMemeGame = () => {
           <AIBattleArena 
             playerMemes={playerMemes}
             playerCoins={playerCoins}
-            setPlayerCoins={setPlayerCoins}
+            setPlayerCoins={useGameStore.getState().setPlayerCoins}
             playSound={playSound}
           />
         );
@@ -264,7 +249,7 @@ const CryptoMemeGame = () => {
         return (
           <GuildSystem 
             playerCoins={playerCoins}
-            setPlayerCoins={setPlayerCoins}
+            setPlayerCoins={useGameStore.getState().setPlayerCoins}
             playSound={playSound}
           />
         );
